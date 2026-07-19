@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "io.github.braams"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -34,11 +34,32 @@ intellijPlatform {
     pluginConfiguration {
         ideaVersion {
             sinceBuild = "251"
+            // no upper bound: the plugin only uses stable platform APIs
+            untilBuild = provider { null }
         }
 
         changeNotes = """
-      Initial version
+      <h3>1.0.0</h3>
+      <ul>
+        <li>Syntax highlighting, structure view and code folding for Kamailio configuration files</li>
+        <li>Hover documentation for core parameters, functions, keywords, module functions and parameters,
+            pseudo-variables and transformations</li>
+        <li>Go to definition for routes, #!define constants and cross-file targets via include_file</li>
+        <li>Formatter mirroring the stock config style</li>
+        <li>Semantic inspections (unresolved/duplicate routes, modparam without loadmodule, unbalanced ifdef)</li>
+      </ul>
     """.trimIndent()
+    }
+
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
+    }
+
+    pluginVerification {
+        ides {
+            ide(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity, "2025.1")
+            ide(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity, "2025.2")
+        }
     }
 }
 
