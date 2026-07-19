@@ -14,6 +14,9 @@ class KamailioDocumentationTest : BasePlatformTestCase() {
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.MODPARAM, "fr_timer", "tm"))
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.MODPARAM, "db_url", null)) // unresolved module
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "ru"))
+        assertNull(KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "ru")!!.module) // core pv
+        assertEquals("htable", KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "sht")!!.module)
+        assertEquals("dialog", KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "dlg")!!.module)
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.TRANSFORMATION, "s.len"))
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.KEYWORD, "myself"))
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.MODULE, "tm"))

@@ -166,7 +166,7 @@ class KamailioCompletionContributor : CompletionContributor() {
     private fun pvElement(e: DocEntry): LookupElement =
         LookupElementBuilder.create(e.name)
             .withIcon(AllIcons.Nodes.Variable)
-            .withTypeText("pseudo-variable")
+            .withTypeText(e.module ?: "core")
 
     private inline fun <reified T : PsiElement> hasParent(el: PsiElement): Boolean =
         PsiTreeUtil.getParentOfType(el, T::class.java) != null

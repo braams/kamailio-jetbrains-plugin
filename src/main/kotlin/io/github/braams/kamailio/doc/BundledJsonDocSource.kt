@@ -64,10 +64,15 @@ class BundledJsonDocSource : KamailioDocSource {
             core.section("keywords") { name, md ->
                 db.keywords[name] = entry(KamailioDocCategory.KEYWORD, name, null, md)
             }
+            // pv -> exporting module, recovered from the cookbook's per-module sections (null = core)
+            val pvModules = readJson("/docs/pv-modules.json")?.entrySet()
+                ?.filter { it.value.isJsonPrimitive }
+                ?.associate { it.key to it.value.asString }
+                .orEmpty()
             core.section("pseudovariables") { name, md ->
                 // keys are mostly bare ("ru"), a few carry the sigil ("$_s") — pvName never includes it
                 val bare = name.removePrefix("$")
-                db.pseudovars[bare] = entry(KamailioDocCategory.PSEUDOVAR, bare, null, md)
+                db.pseudovars[bare] = entry(KamailioDocCategory.PSEUDOVAR, bare, pvModules[bare], md)
             }
             core.section("transformations") { name, md ->
                 db.transformations[name] = entry(KamailioDocCategory.TRANSFORMATION, name, null, md)
