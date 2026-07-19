@@ -6,6 +6,7 @@ An IntelliJ Platform plugin that adds language support for [Kamailio SIP server]
 
 - **Syntax highlighting** — full lexer for the Kamailio config language: preprocessor directives (`#!define`, `#!ifdef`, `#!substdef`, …), pseudo-variables (including interpolation inside double-quoted strings), transformations, `event_route` names, comments.
 - **Hover documentation** — quick doc popups for core parameters, core functions and keywords, module functions, `modparam` parameters, pseudo-variables, transformations, and module overviews (on `loadmodule` and on the module name in `modparam`).
+- **Code completion** — core parameters, functions of all bundled modules, module names in `loadmodule`/`modparam`, `modparam` parameter names filtered by module, pseudo-variables (also inside strings), transformations, route names and `#!define` constants.
 - **Go to definition** — routes (`route(NAME)` → `route[NAME]`), `#!define` constants, cross-file navigation through `include_file`.
 - **Structure view** — routes, defines, module parameters at a glance.
 - **Formatter** — tab indentation and spacing that mirror the stock Kamailio config style; preprocessor directives stay at column 0; content of inactive `#!ifdef` regions is left untouched.
