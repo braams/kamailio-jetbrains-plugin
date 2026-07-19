@@ -11,4 +11,13 @@ object KamailioDocService {
         }
         return bundled.lookup(category, name, module)
     }
+
+    fun entries(category: KamailioDocCategory): Collection<DocEntry> {
+        val merged = LinkedHashMap<String, DocEntry>()
+        for (source in KamailioDocSource.EP_NAME.extensionList) {
+            for (e in source.entries(category)) merged.putIfAbsent("${e.module} ${e.name}", e)
+        }
+        for (e in bundled.entries(category)) merged.putIfAbsent("${e.module} ${e.name}", e)
+        return merged.values
+    }
 }

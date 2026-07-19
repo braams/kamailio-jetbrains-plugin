@@ -10,6 +10,9 @@ interface KamailioDocSource {
 
     fun lookup(category: KamailioDocCategory, name: String, module: String? = null): DocEntry?
 
+    /** All entries of a category, for completion. */
+    fun entries(category: KamailioDocCategory): Collection<DocEntry> = emptyList()
+
     companion object {
         val EP_NAME: ExtensionPointName<KamailioDocSource> =
             ExtensionPointName.create("io.github.braams.kamailio.docSource")

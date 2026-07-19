@@ -41,6 +41,16 @@ class BundledJsonDocSource : KamailioDocSource {
             if (module != null) db.modparams[modparamKey(module, name)] else db.modparamsByName[name]
     }
 
+    override fun entries(category: KamailioDocCategory): Collection<DocEntry> = when (category) {
+        KamailioDocCategory.GLOBAL_PARAM -> db.globalParams.values
+        KamailioDocCategory.KEYWORD -> db.keywords.values
+        KamailioDocCategory.PSEUDOVAR -> db.pseudovars.values
+        KamailioDocCategory.TRANSFORMATION -> db.transformations.values
+        KamailioDocCategory.MODULE -> db.modules.values
+        KamailioDocCategory.FUNCTION -> db.functions.values
+        KamailioDocCategory.MODPARAM -> db.modparams.values
+    }
+
     private fun load(): Db {
         val db = Db()
 
