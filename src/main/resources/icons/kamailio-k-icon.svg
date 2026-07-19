@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Kamailio K icon</title>
+  <desc id="desc">Square icon with a capital K, dark upper swoosh, and green lower swoosh.</desc>
+
+  <!-- Transparent square canvas -->
+  <g fill="none" fill-rule="evenodd">
+    <!-- Upper swoosh -->
+    <path fill="#465257"
+      d="M158 225
+         C350 124, 648 52, 822 76
+         C896 86, 936 116, 941 158
+         C944 181, 939 202, 929 221
+         C903 188, 850 170, 781 168
+         C619 163, 388 185, 158 225 Z"/>
+
+    <!-- Capital K -->
+    <path fill="#465257"
+      d="M357 221
+         H444
+         V505
+         L690 221
+         H799
+         L572 476
+         L808 731
+         H699
+         L511 526
+         L444 601
+         V731
+         H357 Z"/>
+
+    <!-- Lower swoosh -->
+    <path fill="#70E000"
+      d="M154 779
+         C184 815, 260 833, 370 835
+         C555 839, 755 796, 938 716
+         C779 819, 568 895, 364 897
+         C259 898, 190 878, 161 842
+         C145 822, 143 799, 154 779 Z"/>
+  </g>
+</svg>

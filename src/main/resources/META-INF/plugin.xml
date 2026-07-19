@@ -1,0 +1,87 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>io.github.braams.kamailio</id>
+
+    <name>Kamailio Config</name>
+
+    <vendor url="https://github.com/braams/kamailio-jetbrains-plugin"
+            email="braamsdev@gmail.com">Maksim Nesterov</vendor>
+
+    <description><![CDATA[
+    Language support for <a href="https://www.kamailio.org">Kamailio SIP server</a> configuration files:<br>
+    syntax highlighting, structure view, go to definition, formatting, syntax checks and documentation hover.<br>
+    Hover documentation is taken from the <a href="https://github.com/braams/vscode-kamailio-hover">vscode-kamailio-hover</a> project.
+  ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="Kamailio Config" language="Kamailio"
+                  implementationClass="io.github.braams.kamailio.KamailioFileType"
+                  fieldName="INSTANCE"
+                  patterns="kamailio*.cfg"/>
+        <fileTypeDetector implementation="io.github.braams.kamailio.KamailioFileTypeDetector"/>
+
+        <lang.parserDefinition language="Kamailio"
+                               implementationClass="io.github.braams.kamailio.parser.KamailioParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Kamailio"
+                                       implementationClass="io.github.braams.kamailio.highlighting.KamailioSyntaxHighlighterFactory"/>
+        <colorSettingsPage implementation="io.github.braams.kamailio.highlighting.KamailioColorSettingsPage"/>
+
+        <lang.commenter language="Kamailio"
+                        implementationClass="io.github.braams.kamailio.editor.KamailioCommenter"/>
+        <lang.braceMatcher language="Kamailio"
+                           implementationClass="io.github.braams.kamailio.editor.KamailioBraceMatcher"/>
+        <lang.foldingBuilder language="Kamailio"
+                             implementationClass="io.github.braams.kamailio.editor.KamailioFoldingBuilder"/>
+
+        <lang.psiStructureViewFactory language="Kamailio"
+                                      implementationClass="io.github.braams.kamailio.structure.KamailioStructureViewFactory"/>
+
+        <lang.findUsagesProvider language="Kamailio"
+                                 implementationClass="io.github.braams.kamailio.resolve.KamailioFindUsagesProvider"/>
+        <psi.referenceContributor language="Kamailio"
+                                  implementation="io.github.braams.kamailio.resolve.KamailioReferenceContributor"/>
+
+        <annotator language="Kamailio"
+                   implementationClass="io.github.braams.kamailio.highlighting.KamailioAnnotator"/>
+        <highlightErrorFilter
+                implementation="io.github.braams.kamailio.highlighting.KamailioInactiveRegionErrorFilter"/>
+
+        <lang.formatter language="Kamailio"
+                        implementationClass="io.github.braams.kamailio.formatting.KamailioFormattingModelBuilder"/>
+        <langCodeStyleSettingsProvider
+                implementation="io.github.braams.kamailio.formatting.KamailioLanguageCodeStyleSettingsProvider"/>
+        <postFormatProcessor
+                implementation="io.github.braams.kamailio.formatting.KamailioPostFormatProcessor"/>
+
+        <platform.backend.documentation.targetProvider
+                implementation="io.github.braams.kamailio.doc.KamailioDocumentationTargetProvider"/>
+
+        <localInspection language="Kamailio" shortName="KamailioUnresolvedRoute"
+                         displayName="Unresolved route" groupName="Kamailio"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.braams.kamailio.inspections.UnresolvedRouteInspection"/>
+        <localInspection language="Kamailio" shortName="KamailioUnbalancedIfdef"
+                         displayName="Unbalanced preprocessor directives" groupName="Kamailio"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="io.github.braams.kamailio.inspections.UnbalancedIfdefInspection"/>
+        <localInspection language="Kamailio" shortName="KamailioDuplicateRoute"
+                         displayName="Duplicate route definition" groupName="Kamailio"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.braams.kamailio.inspections.DuplicateRouteInspection"/>
+        <localInspection language="Kamailio" shortName="KamailioModparamWithoutLoadmodule"
+                         displayName="Modparam for a module that is not loaded" groupName="Kamailio"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.braams.kamailio.inspections.ModparamWithoutLoadmoduleInspection"/>
+    </extensions>
+
+    <extensionPoints>
+        <extensionPoint qualifiedName="io.github.braams.kamailio.docSource"
+                        interface="io.github.braams.kamailio.doc.KamailioDocSource"
+                        dynamic="true"/>
+    </extensionPoints>
+</idea-plugin>
