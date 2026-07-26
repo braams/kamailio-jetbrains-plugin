@@ -13,8 +13,9 @@ class KamailioDocumentationTest : BasePlatformTestCase() {
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.GLOBAL_PARAM, "debug"))
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.MODPARAM, "fr_timer", "tm"))
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.MODPARAM, "db_url", null)) // unresolved module
-        assertNotNull(KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "ru"))
-        assertNull(KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "ru")!!.module) // core pv
+        assertNotNull(KamailioDocService.lookup(KamailioDocCategory.FUNCTION, "add_rport")) // alias of force_rport
+        assertEquals("pv", KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "ru")!!.module)
+        assertNull(KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "rc")!!.module) // core pv
         assertEquals("htable", KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "sht")!!.module)
         assertEquals("dialog", KamailioDocService.lookup(KamailioDocCategory.PSEUDOVAR, "dlg")!!.module)
         assertNotNull(KamailioDocService.lookup(KamailioDocCategory.TRANSFORMATION, "s.len"))
@@ -85,6 +86,14 @@ class KamailioDocumentationTest : BasePlatformTestCase() {
         assertTrue(
             "define local doc",
             targetsAt("#!KAMAILIO\n#!define DBGLEVEL 3\ndebug=DBGLE<caret>VEL\n")
+        )
+        assertFalse(
+            "a keyword word used as a pv key is a plain name, not the keyword",
+            targetsAt("#!KAMAILIO\nrequest_route {\n    \$var(rou<caret>te) = 1;\n}\n")
+        )
+        assertFalse(
+            "a keyword word used as a transformation argument is a plain name, not the keyword",
+            targetsAt("#!KAMAILIO\nrequest_route {\n    \$var(x) = \$(rU{s.select,rou<caret>te});\n}\n")
         )
     }
 }
