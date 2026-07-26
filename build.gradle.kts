@@ -5,8 +5,8 @@ plugins {
     id("org.jetbrains.grammarkit") version "2022.3.2.2"
 }
 
-group = "io.github.braams"
-version = "1.0.0"
+group = providers.gradleProperty("pluginGroup").get()
+version = providers.gradleProperty("pluginVersion").get()
 
 repositories {
     mavenCentral()
@@ -49,6 +49,16 @@ intellijPlatform {
         <li>Semantic inspections (unresolved/duplicate routes, modparam without loadmodule, unbalanced ifdef)</li>
       </ul>
     """.trimIndent()
+    }
+
+    // Optional plugin signing: only wired when the certificate secrets are present
+    // (so local builds and first-time publishes work without a certificate).
+    if (System.getenv("CERTIFICATE_CHAIN") != null) {
+        signing {
+            certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+            privateKey = providers.environmentVariable("PRIVATE_KEY")
+            password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+        }
     }
 
     publishing {
