@@ -11,8 +11,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
 import io.github.braams.kamailio.psi.KamailioFile
 import io.github.braams.kamailio.psi.impl.KamailioCallExprMixin
+import io.github.braams.kamailio.psi.KamailioPvKey
+import io.github.braams.kamailio.psi.KamailioTransArg
 import io.github.braams.kamailio.psi.KamailioTypes
 import io.github.braams.kamailio.psi.impl.KamailioGlobalAssignmentMixin
 import io.github.braams.kamailio.psi.impl.KamailioLoadmoduleMixin
@@ -114,6 +117,8 @@ class KamailioDocumentationTargetProvider : DocumentationTargetProvider {
 
     private fun target(anchor: PsiElement, category: KamailioDocCategory, name: String, module: String?): DocumentationTarget? {
         val entry = KamailioDocService.lookup(category, name, module) ?: return null
+        // name-only entries exist for completion; there is nothing useful to show in a popup
+        if (entry.doc.isBlank() && entry.syntax == null) return null
         return KamailioDocTarget(anchor, entryHtml(anchor, entry), entry.name)
     }
 
@@ -144,6 +149,10 @@ class KamailioDocumentationTargetProvider : DocumentationTargetProvider {
     /** Core keywords (`myself`, `src_ip`, `request_route`, ...) are plain tokens, not PSI structure. */
     private fun fromKeyword(leaf: PsiElement): DocumentationTarget? {
         if (leaf.node.elementType !in KEYWORD_TOKENS) return null
+        // kw_as_name_ (Kamailio.bnf) lets these keyword tokens act as plain names inside a pv key
+        // ($var(route)) or a transformation argument ({s.select,route}) — not a keyword there.
+        if (PsiTreeUtil.getParentOfType(leaf, KamailioPvKey::class.java) != null) return null
+        if (PsiTreeUtil.getParentOfType(leaf, KamailioTransArg::class.java) != null) return null
         return target(leaf, KamailioDocCategory.KEYWORD, leaf.text, null)
     }
 

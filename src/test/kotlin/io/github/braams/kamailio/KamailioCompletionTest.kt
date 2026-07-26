@@ -48,6 +48,20 @@ class KamailioCompletionTest : BasePlatformTestCase() {
         assertDoesntContain(items, "early_media") // acc parameter
     }
 
+    fun testNameOnlyModparamCompletesButHasNoHover() {
+        // protect_contacts has no doc text in the database: it must complete, but not produce a hover
+        val items = completions("#!KAMAILIO\nmodparam(\"auth\", \"pro<caret>\", 1)\n")
+        assertContainsElements(items, "protect_contacts", "proxy_challenge_header")
+        val entry = io.github.braams.kamailio.doc.KamailioDocService.lookup(
+            io.github.braams.kamailio.doc.KamailioDocCategory.MODPARAM, "protect_contacts", "auth"
+        )
+        assertNotNull(entry)
+        myFixture.configureByText("kamailio.cfg", "#!KAMAILIO\nmodparam(\"auth\", \"protect_<caret>contacts\", 1)\n")
+        val targets = io.github.braams.kamailio.doc.KamailioDocumentationTargetProvider()
+            .documentationTargets(myFixture.file, myFixture.caretOffset)
+        assertEmpty(targets)
+    }
+
     fun testPseudovarInCode() {
         val items = completions("#!KAMAILIO\nrequest_route {\n    \$var(x) = \$r<caret>;\n}\n")
         assertContainsElements(items, "rU", "ru")

@@ -282,9 +282,21 @@ transformation ::= LBRACE trans_name trans_args_? RBRACE {
 trans_name ::= identifier (DOT identifier)*
 private trans_args_ ::= (COMMA trans_arg)+
 trans_arg ::= trans_arg_item_+
-private trans_arg_item_ ::= identifier | NUMBER | MINUS | pv | string_literal | SQ_STRING
+private trans_arg_item_ ::= identifier | kw_as_name_ | NUMBER | MINUS | pv | string_literal | SQ_STRING
   | DOT | STAR | SLASH | COLON | PLUS
 
+// The lexer tokenizes these words as hard keywords regardless of context (it can't tell a
+// route_def/if_stmt from a hashtable/AVP/pv key), but real Kamailio configs freely use them as
+// key/variable names, e.g. $var(route), $sht(h=>status). Safe to accept here: route_def / if_stmt
+// / etc. are only ever reachable at statement start (via item_/statement's ordered, pinned
+// alternatives), never from inside a pv key or transformation argument.
+// <<asName>> remaps the matched token to IDENT (KamailioParserUtil.asName) so the resulting PSI
+// leaf is a plain identifier everywhere downstream (highlighting, hover, formatting) — fixing this
+// only in the parser's accept-set left the *token type* as the keyword's, so anything keying off
+// element type directly (the lexer-based syntax highlighter has no PSI context to special-case)
+// kept coloring it as a keyword no matter what the higher-level PSI/annotator layers did about it.
+private kw_as_name_ ::= <<asName>>
+
 pv_key ::= pv_key_item_+
-private pv_key_item_ ::= identifier | NUMBER | IP_LITERAL | pv | string_literal | SQ_STRING
+private pv_key_item_ ::= identifier | kw_as_name_ | NUMBER | IP_LITERAL | pv | string_literal | SQ_STRING
   | DOT | MINUS | STAR | SLASH | COLON | FATARROW | EQ | PLUS | COMMA | LBRACK | RBRACK

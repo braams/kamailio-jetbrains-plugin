@@ -5,12 +5,16 @@ import com.google.gson.JsonParser
 
 /**
  * Reads the bundled documentation database generated from the official Kamailio docs:
- * - `/docs/core.json` — sections `parameters`, `functions`, `keywords`, `pseudovariables`, `transformations`;
- *   each section maps name -> Markdown text.
- * - `/docs/modules.json` — module name -> `{overview, parameters: {...}, functions: {...}}`, values in Markdown.
+ * - `/docs/core.json` — `{"core": {overview, global_parameters, functions, keywords, pseudovariables,
+ *   transformations}}`;
+ * - `/docs/modules.json` — module name -> `{overview, parameters, functions, pseudovariables,
+ *   transformations}`.
  *
- * The first `###` heading of an entry (it usually carries the signature / value type) becomes the
- * [DocEntry.syntax] line; the rest is the Markdown body.
+ * Every entry is an object `{"doc": <markdown>, "aliases": [...], "type": ..., "variants": [...]}`;
+ * pseudo-variables and transformations live in the module that exports them, so module attribution
+ * is explicit. The first `###` heading of the Markdown (usually the signature / value type) becomes
+ * the [DocEntry.syntax] line. Aliases are registered as separate keys pointing to a renamed copy of
+ * the entry.
  */
 class BundledJsonDocSource : KamailioDocSource {
 
@@ -54,49 +58,62 @@ class BundledJsonDocSource : KamailioDocSource {
     private fun load(): Db {
         val db = Db()
 
-        readJson("/docs/core.json")?.let { core ->
-            core.section("parameters") { name, md ->
-                db.globalParams[name] = entry(KamailioDocCategory.GLOBAL_PARAM, name, null, md)
+        readJson("/docs/core.json")?.getAsJsonObject("core")?.let { core ->
+            core.section("global_parameters") { name, o ->
+                putWithAliases(db.globalParams, KamailioDocCategory.GLOBAL_PARAM, name, null, o)
             }
-            core.section("functions") { name, md ->
-                db.functions[name] = entry(KamailioDocCategory.FUNCTION, name, null, md)
+            core.section("functions") { name, o ->
+                putWithAliases(db.functions, KamailioDocCategory.FUNCTION, name, null, o)
             }
-            core.section("keywords") { name, md ->
-                db.keywords[name] = entry(KamailioDocCategory.KEYWORD, name, null, md)
+            core.section("keywords") { name, o ->
+                putWithAliases(db.keywords, KamailioDocCategory.KEYWORD, name, null, o)
             }
-            // pv -> exporting module, recovered from the cookbook's per-module sections (null = core)
-            val pvModules = readJson("/docs/pv-modules.json")?.entrySet()
-                ?.filter { it.value.isJsonPrimitive }
-                ?.associate { it.key to it.value.asString }
-                .orEmpty()
-            core.section("pseudovariables") { name, md ->
-                // keys are mostly bare ("ru"), a few carry the sigil ("$_s") — pvName never includes it
-                val bare = name.removePrefix("$")
-                db.pseudovars[bare] = entry(KamailioDocCategory.PSEUDOVAR, bare, pvModules[bare], md)
+            core.section("pseudovariables") { name, o ->
+                putWithAliases(db.pseudovars, KamailioDocCategory.PSEUDOVAR, name.removePrefix("$"), null, o)
             }
-            core.section("transformations") { name, md ->
-                db.transformations[name] = entry(KamailioDocCategory.TRANSFORMATION, name, null, md)
+            core.section("transformations") { name, o ->
+                putWithAliases(db.transformations, KamailioDocCategory.TRANSFORMATION, name, null, o)
             }
         }
 
         readJson("/docs/modules.json")?.let { mods ->
             for ((moduleName, moduleEl) in mods.entrySet()) {
                 val module = moduleEl as? JsonObject ?: continue
-                module.get("overview")?.takeIf { it.isJsonPrimitive }?.asString?.let { overview ->
-                    db.modules[moduleName] = entry(KamailioDocCategory.MODULE, moduleName, null, overview)
-                }
-                module.section("parameters") { name, md ->
-                    val e = entry(KamailioDocCategory.MODPARAM, name, moduleName, md)
+                val overview = module.get("overview")?.takeIf { it.isJsonPrimitive }?.asString.orEmpty()
+                db.modules[moduleName] = entry(KamailioDocCategory.MODULE, moduleName, null, overview)
+                module.section("parameters") { name, o ->
+                    val e = entryOf(KamailioDocCategory.MODPARAM, name, moduleName, o)
                     db.modparams[modparamKey(moduleName, name)] = e
                     db.modparamsByName.putIfAbsent(name, e)
                 }
-                module.section("functions") { name, md ->
-                    // core functions win, and the first module wins the rare cross-module name clash
-                    db.functions.putIfAbsent(name, entry(KamailioDocCategory.FUNCTION, name, moduleName, md))
+                // core wins name clashes, then the first module (rare, e.g. tls vs tls_wolfssl)
+                module.section("functions") { name, o ->
+                    putWithAliases(db.functions, KamailioDocCategory.FUNCTION, name, moduleName, o)
+                }
+                module.section("pseudovariables") { name, o ->
+                    putWithAliases(db.pseudovars, KamailioDocCategory.PSEUDOVAR, name.removePrefix("$"), moduleName, o)
+                }
+                module.section("transformations") { name, o ->
+                    putWithAliases(db.transformations, KamailioDocCategory.TRANSFORMATION, name, moduleName, o)
                 }
             }
         }
         return db
+    }
+
+    /** Registers the entry under its name and, as renamed copies, under each of its aliases. */
+    private fun putWithAliases(
+        map: MutableMap<String, DocEntry>,
+        category: KamailioDocCategory,
+        name: String,
+        module: String?,
+        o: JsonObject
+    ) {
+        val e = entryOf(category, name, module, o)
+        map.putIfAbsent(name, e)
+        o.getAsJsonArray("aliases")?.forEach { alias ->
+            if (alias.isJsonPrimitive) map.putIfAbsent(alias.asString, e.copy(name = alias.asString))
+        }
     }
 
     private fun readJson(path: String): JsonObject? {
@@ -104,14 +121,20 @@ class BundledJsonDocSource : KamailioDocSource {
         return stream.reader().use { JsonParser.parseReader(it) as? JsonObject }
     }
 
-    private inline fun JsonObject.section(name: String, put: (String, String) -> Unit) {
+    private inline fun JsonObject.section(name: String, handle: (String, JsonObject) -> Unit) {
         val obj = get(name) as? JsonObject ?: return
         for ((key, value) in obj.entrySet()) {
-            if (value.isJsonPrimitive) put(key, value.asString)
+            (value as? JsonObject)?.let { handle(key, it) }
         }
     }
 
     private fun modparamKey(module: String, name: String) = "$module $name"
+
+    /** Name-only entries (blank doc) are kept: completion needs the names; hover skips them. */
+    private fun entryOf(category: KamailioDocCategory, name: String, module: String?, o: JsonObject): DocEntry {
+        val doc = o.get("doc")?.takeIf { it.isJsonPrimitive }?.asString.orEmpty()
+        return entry(category, name, module, doc)
+    }
 
     private fun entry(category: KamailioDocCategory, name: String, module: String?, md: String): DocEntry {
         val text = md.replace("\u200B", "").trim()

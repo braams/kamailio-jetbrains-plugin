@@ -3,8 +3,26 @@ package io.github.braams.kamailio.parser
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.psi.TokenType
+import io.github.braams.kamailio.psi.KamailioTokenSets
+import io.github.braams.kamailio.psi.KamailioTypes
 
 object KamailioParserUtil : GeneratedParserUtilBase() {
+
+    /**
+     * Consumes the current token as a plain name if it's one of the hard keywords that
+     * `kw_as_name_` (Kamailio.bnf) allows as a pv-key / transformation-argument word (`route`,
+     * `if`, `modparam`, ...), remapping it to IDENT first. Without the remap, the resulting PSI
+     * leaf keeps the keyword's token type, and the lexer-based syntax highlighter — which has no
+     * PSI context, only a token type — keeps coloring it as a keyword.
+     */
+    @JvmStatic
+    fun asName(builder: PsiBuilder, @Suppress("UNUSED_PARAMETER") level: Int): Boolean {
+        val type = builder.tokenType ?: return false
+        if (!KamailioTokenSets.KEYWORDS.contains(type)) return false
+        builder.remapCurrentToken(KamailioTypes.IDENT)
+        builder.advanceLexer()
+        return true
+    }
 
     /**
      * True when the next token is on the same line as the previous non-whitespace token.

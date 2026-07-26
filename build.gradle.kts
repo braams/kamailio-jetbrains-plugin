@@ -39,6 +39,15 @@ intellijPlatform {
         }
 
         changeNotes = """
+      <h3>1.1.0</h3>
+      <ul>
+        <li>Keywords used as names inside pseudo-variable keys and transformation arguments
+            (e.g. <code>${'$'}var(route)</code>, <code>${'$'}sht(h=&gt;status)</code>) are now parsed,
+            highlighted and hovered as plain identifiers instead of keywords</li>
+        <li>Pseudo-variables and transformations are attributed to their exporting module in
+            hover and completion</li>
+        <li>Greatly expanded bundled documentation for core and modules</li>
+      </ul>
       <h3>1.0.0</h3>
       <ul>
         <li>Syntax highlighting, structure view and code folding for Kamailio configuration files</li>
